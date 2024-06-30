@@ -3,13 +3,13 @@ import time
 import torch
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
-from data_loader import load_from_epd_file
+from epd import load
 from dataset import LabelledDataset
 from nnue import NNUE
 
 DEVICE = torch.device("cpu")
 NUM_WORKERS = 1
-MAX_SIZE = None
+MAX_SIZE = 100000
 BATCH_SIZE = 64
 INPUT_SIZE = 768
 HIDDEN_SIZE = 256
@@ -28,7 +28,7 @@ torch.set_num_threads(torch.get_num_threads())  # Use all available threads
 torch.set_num_interop_threads(torch.get_num_threads())
 
 file_path = "/Users/kelseyde/git/dan/calvin/calvin-chess-engine/src/test/resources/texel/quiet_positions.epd"
-training_data, validation_data = load_from_epd_file(file_path, max_size=MAX_SIZE)
+training_data, validation_data = load(file_path, max_size=MAX_SIZE)
 
 train_dataset = LabelledDataset(training_data)
 validation_dataset = LabelledDataset(validation_data)
@@ -82,6 +82,8 @@ for epoch in range(100):
     duration = ("{0:.2f}".format(end - start))
     lr = optimizer.param_groups[0]['lr']
     print("epoch: {}, time: {}s, lr: {}, train error: {:.6f}, val error: {:.6f}".format(epoch, duration, lr, avg_train_loss, avg_validation_loss))
+
+print(model.parameters())
 
 # Plotting the loss graph
 plt.figure(figsize=(10, 5))

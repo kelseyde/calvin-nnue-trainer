@@ -1,9 +1,9 @@
 import time
 
-from fen_utils import fen_to_features
+from fen import fen_to_features
 
 
-def load_from_epd_file(file_path, max_size=None):
+def load(file_path, max_size=None):
     """
     Load data from EPD file.
 
@@ -19,9 +19,9 @@ def load_from_epd_file(file_path, max_size=None):
         for x in range(max_size):
             line = data[x]
             parts = line.split('\"')
-            fen = parts[0].strip()
-            input_data = fen_to_features(fen)
-            output_data = parse_epd_result(parts[1])
+            fen_string = parts[0].strip()
+            input_data = fen_to_features(fen_string)
+            output_data = parse_result(parts[1])
             all_data.append((input_data, output_data))
 
     num_data = len(all_data)
@@ -30,7 +30,7 @@ def load_from_epd_file(file_path, max_size=None):
     return training_data, validation_data
 
 
-def parse_epd_result(result):
+def parse_result(result):
     """
     Parse EPD result.
 
