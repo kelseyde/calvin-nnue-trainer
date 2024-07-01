@@ -1,10 +1,12 @@
 import time
 
+from torch.utils.data import DataLoader
+
 from dataset import LabelledDataset
 from fen import fen_to_features
 
 
-def load(file_path, max_size=None):
+def load(file_path, batch_size=64, max_size=None):
     """
     Load data from EPD file.
 
@@ -28,7 +30,9 @@ def load(file_path, max_size=None):
     num_data = len(all_data)
     training_data = LabelledDataset(all_data[:int(0.9 * num_data)])
     validation_data = LabelledDataset(all_data[int(0.9 * num_data):])
-    return training_data, validation_data
+    train_loader = DataLoader(training_data, batch_size=batch_size, shuffle=True, pin_memory=True)
+    val_loader = DataLoader(validation_data, batch_size=batch_size, shuffle=False, pin_memory=True)
+    return train_loader, val_loader
 
 
 def parse_result(result):
