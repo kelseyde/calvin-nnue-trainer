@@ -1,5 +1,6 @@
 import time
 
+from dataset import LabelledDataset
 from fen import fen_to_features
 
 
@@ -25,8 +26,8 @@ def load(file_path, max_size=None):
             all_data.append((input_data, output_data))
 
     num_data = len(all_data)
-    training_data = all_data[:int(0.9 * num_data)]
-    validation_data = all_data[int(0.9 * num_data):]
+    training_data = LabelledDataset(all_data[:int(0.9 * num_data)])
+    validation_data = LabelledDataset(all_data[int(0.9 * num_data):])
     return training_data, validation_data
 
 
