@@ -2,4 +2,4 @@
 
 # <div align="center"> Calvin NNUE Trainer </div>
 
-A Python library for building and training NNUE neural networks, to be used by my chess engine [Calvin](https://github.com/kelseyde/calvin-chess-engine).
+A Python library for building and training NNUE neural networks for my chess engine [Calvin](https://github.com/kelseyde/calvin-chess-engine).
