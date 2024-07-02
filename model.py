@@ -1,11 +1,6 @@
+import numpy as np
 import torch
 import torch.nn as nn
-
-INPUT_LAYER_SIZE = 768
-HIDDEN_LAYER_SIZE = 256
-
-COLOUR_STRIDE = 64 * 6
-PIECE_STRIDE = 64
 
 
 class NNUE(nn.Module):
@@ -32,3 +27,19 @@ class NNUE(nn.Module):
         squared_output = torch.pow(relu_output, 2)
         clipped_output = torch.clamp(squared_output, max=self.max_value)
         return clipped_output
+
+    def save(self, file_path):
+        print(self.fc1.weight.detach())
+        print(self.fc1.bias.detach())
+        print(self.fc2.weight.detach())
+        print(self.fc2.bias.detach())
+        input_weights = self.fc1.weight.detach().numpy().astype(np.int16).flatten()
+        input_biases = self.fc1.bias.detach().numpy().astype(np.int16).flatten()
+        output_weights = self.fc2.weight.detach().numpy().astype(np.int16).flatten()
+        output_bias = self.fc2.bias.detach().numpy().astype(np.int16).flatten()
+
+        with open(file_path, 'wb') as f:
+            f.write(input_weights.tobytes(order='C'))
+            f.write(input_biases.tobytes(order='C'))
+            f.write(output_weights.tobytes(order='C'))
+            f.write(output_bias.tobytes(order='C'))
