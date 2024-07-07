@@ -2,26 +2,26 @@ import matplotlib.pyplot as plt
 import torch
 
 from src import model
-from src.epd import load
+from src.dataformat.epd import load
 from src.loss import WeightedMSELoss
 from tqdm import tqdm
 
-INPUT_FILE_PATH = "./datasets/lichess_db_eval.epd"
-OUTPUT_FILE_PATH = "/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/very_small_net.nnue"
-PREVIOUS_MODEL = None
+INPUT_FILE_PATH = "./datasets/training_data_0.txt"
+OUTPUT_FILE_PATH = "/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/yukon_ho_1.nnue"
+PREVIOUS_MODEL = "/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/yukon_ho_0.nnue"
 DEVICE = torch.device("mps")
-NUM_WORKERS = 1
+NUM_WORKERS = 3
 NUM_EPOCHS = 20
 CHECKPOINT_FREQUENCY = 1
 MAX_SIZE = None
-BATCH_SIZE = 1024 * 8
+BATCH_SIZE = 1024
 INPUT_SIZE = 768
 HIDDEN_SIZE = 256
 LEARNING_RATE = 0.0001
 MOMENTUM = 0.9
-STEP_SIZE = 100
+STEP_SIZE = 5
 GAMMA = 0.1
-LAMBDA = 1.0
+LAMBDA = 0.75
 
 
 def train():
@@ -30,10 +30,11 @@ def train():
           f"lr: {LEARNING_RATE}, momentum: {MOMENTUM}, lambda: {LAMBDA}, step size: {STEP_SIZE}, gamma: {GAMMA}")
 
     print("loading training data...")
-    train_loader, val_loader = load(INPUT_FILE_PATH, batch_size=BATCH_SIZE, max_size=MAX_SIZE, delimiter=',')
+    train_loader, val_loader = load(INPUT_FILE_PATH, batch_size=BATCH_SIZE, max_size=MAX_SIZE,
+                                    delimiter='|', fen_index=0, score_index=1, result_index=2)
     nnue = init_model()
     optimizer = torch.optim.SGD(nnue.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM)
-    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=STEP_SIZE, gamma=GAMMA)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=STEP_SIZE, gamma=GAMMA)
     loss_fn = WeightedMSELoss()
 
     # train_losses = []
@@ -54,7 +55,7 @@ def train():
             epoch_loss += float(error.item())
             loop.set_description(f"epoch: {epoch}, train loss: {error.item():.6f}")
 
-        # scheduler.step()  # Adjust learning rate
+        scheduler.step()  # Adjust learning rate
         avg_train_loss = epoch_loss / len(train_loader)
         # train_losses.append(avg_train_loss)
 

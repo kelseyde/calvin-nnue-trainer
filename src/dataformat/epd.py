@@ -4,17 +4,20 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
-from fen import fen_to_features
-from src import util
+from src.dataformat.fen import fen_to_features
+from src import wdl
 
 
 class EPDFileDataset(Dataset):
-    def __init__(self, file_path, max_size=None, delimiter=','):
+    def __init__(self, file_path, max_size=None, delimiter=',', fen_index=0, result_index=1, score_index=2):
         self.file_path = file_path
         self.max_size = max_size
         self.delimiter = delimiter
         self.length = 0
         self.index_offsets = []
+        self.fen_index = fen_index
+        self.result_index = result_index
+        self.score_index = score_index
         self._build_index()
 
     def _build_index(self):
@@ -34,13 +37,13 @@ class EPDFileDataset(Dataset):
         with open(self.file_path, 'r') as f:
             f.seek(self.index_offsets[idx])
             line = f.readline()
-            return parse_labelled_position(line, self.delimiter)
+            return parse_labelled_position(line, self.delimiter, self.fen_index, self.result_index, self.score_index)
 
 
-def load(file_path, batch_size=64, max_size=None, delimiter=','):
+def load(file_path, batch_size=64, max_size=None, delimiter=',', fen_index=0, result_index=1, score_index=2):
     start = t.time()
 
-    dataset = EPDFileDataset(file_path, max_size, delimiter)
+    dataset = EPDFileDataset(file_path, max_size, delimiter, fen_index, result_index, score_index)
     num_data = len(dataset)
     train_size = int(0.9 * num_data)
     val_size = num_data - train_size
@@ -57,21 +60,31 @@ def load(file_path, batch_size=64, max_size=None, delimiter=','):
     return train_loader, val_loader
 
 
-def parse_labelled_position(line, delimiter=','):
-    parts = line.split(delimiter)
-    fen_string = parts[0].strip()
-    input_data = fen_to_features(fen_string).astype(np.float32)  # Convert to float32
-    result = parse_result(parts[1])
-    score = util.cp_to_wdl(parts[2])
-    output_data = None
-    if result is not None and score is not None:
-        output_data = (np.float32(result), np.float32(score))
-    elif result is not None:
-        output_data = np.float32(result)
-    elif score is not None:
-        output_data = np.float32(score)
-    return input_data, output_data
+# def parse_labelled_position(line, delimiter=',', fen_index=0, result_index=1, score_index=2):
+#     parts = line.split(delimiter)
+#     fen_string = parts[fen_index].strip()
+#     input_data = fen_to_features(fen_string).astype(np.float32)
+#     result = parse_result(parts[result_index])
+#     score = wdl.cp_to_wdl(parts[score_index])
+#     if result is None and score is not None:
+#         result = score
+#     if score is None and result is not None:
+#         score = result
+#     output_data = (np.float32(result), np.float32(score))
+#     return input_data, output_data
 
+def parse_labelled_position(line, delimiter=',', fen_index=0, result_index=1, score_index=2):
+    parts = line.split(delimiter)
+    fen_string = parts[fen_index].strip()
+    input_data = torch.tensor(fen_to_features(fen_string), dtype=torch.float32)
+    result = parse_result(parts[result_index])
+    score = wdl.cp_to_wdl(parts[score_index])
+    if result is None and score is not None:
+        result = score
+    if score is None and result is not None:
+        score = result
+    output_data = torch.tensor((result, score), dtype=torch.float32)
+    return input_data, output_data
 
 def parse_result(result):
     if '1-0' in result or "1.0" in result:

@@ -7,3 +7,8 @@ Elo difference: -319.0 +/- 64.3, LOS: 0.0 %, DrawRatio: 9.5 %
 Name: calvinball_beta, loss: 0.031892, data: 35mil, device: mps, epochs: 200, batch: 16384, architecture: 768->256->1, lr: 0.0001, momentum: 0.9, lambda: 1.0, step size: 100, gamma: 0.1
 Score of Calvin DEV vs Calvin: 43 - 514 - 50  [0.112] 607
 Elo difference: -359.6 +/- 39.4, LOS: 0.0 %, DrawRatio: 8.2 %
+
+#3
+Name: yukon_ho_1, loss: 0.05XXX, data: 100mil, device: mps, epochs: 1, batch: 1024, architecture: 768->256->1, lr: 0.0001, momentum: 0.9, lambda: 0.75, step size: 100, gamma: 0.1
+Score of Calvin DEV vs Calvin: 14 - 173 - 13  [0.102] 200
+Elo difference: -376.9 +/- 75.2, LOS: 0.0 %, DrawRatio: 6.5 %

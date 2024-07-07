@@ -2,8 +2,8 @@ import unittest
 
 import torch
 
-from src import util, quantize
-from src.fen import fen_to_features
+from src import wdl, quantize
+from src.dataformat.fen import fen_to_features
 from src.model import NNUE
 
 
@@ -50,27 +50,27 @@ class FenTest(unittest.TestCase):
     def test_startpos(self):
         fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         features = fen_to_features(fen)
-        model = NNUE.load("/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/very_small_net.nnue", input_size=768, hidden_size=256)
+        model = NNUE.load("/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/yukon_ho_1.nnue", input_size=768, hidden_size=256)
 
         score = model(torch.tensor(features, dtype=torch.float32))
         print(score.item())
-        print("cp: ", util.wdl_to_cp(score.item()))
+        print("cp: ", wdl.wdl_to_cp(score.item()))
 
         fen = "r1bqkbnr/1ppp1ppp/2n5/1p6/4P2P/5NPR/P1P1KP2/q1BQ4 b kq - 0 9"
         features = fen_to_features(fen)
-        model = NNUE.load("/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/very_small_net.nnue", input_size=768, hidden_size=256)
+        model = NNUE.load("/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/yukon_ho_1.nnue", input_size=768, hidden_size=256)
 
         score = model(torch.tensor(features, dtype=torch.float32))
         print(score.item())
-        print("cp: ", util.wdl_to_cp(score.item()))
+        print("cp: ", wdl.wdl_to_cp(score.item()))
 
         fen = "4k3/3ppp2/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1"
         features = fen_to_features(fen)
-        model = NNUE.load("/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/very_small_net.nnue", input_size=768, hidden_size=256)
+        model = NNUE.load("/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/yukon_ho_1.nnue", input_size=768, hidden_size=256)
 
         score = model(torch.tensor(features, dtype=torch.float32))
         print(score.item())
-        print("cp: ", util.wdl_to_cp(score.item()))
+        print("cp: ", wdl.wdl_to_cp(score.item()))
 
 
     def test_ruy_lopez(self):
@@ -80,5 +80,5 @@ class FenTest(unittest.TestCase):
 
         score = model(torch.tensor(features, dtype=torch.float32))
         print(score.item())
-        print("cp: ", util.wdl_to_cp(score.item()))
-        print("qcp: ", quantize.quantize_int16(util.wdl_to_cp(score.item())))
+        print("cp: ", wdl.wdl_to_cp(score.item()))
+        print("qcp: ", quantize.quantize_int16(wdl.wdl_to_cp(score.item())))
