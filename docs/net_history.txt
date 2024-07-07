@@ -1,0 +1,9 @@
+#1
+Name: calvinball_alpha, loss: 0.031892, data: 8mil, device: mps, epochs: 200, batch: 16384, architecture: 768->16->1, lr: 0.0001, momentum: 0.9, lambda: 1.0, step size: 100, gamma: 0.1
+Score of Calvin DEV vs Calvin: 18 - 163 - 19  [0.138] 200
+Elo difference: -319.0 +/- 64.3, LOS: 0.0 %, DrawRatio: 9.5 %
+
+#2
+Name: calvinball_beta, loss: 0.031892, data: 35mil, device: mps, epochs: 200, batch: 16384, architecture: 768->256->1, lr: 0.0001, momentum: 0.9, lambda: 1.0, step size: 100, gamma: 0.1
+Score of Calvin DEV vs Calvin: 43 - 514 - 50  [0.112] 607
+Elo difference: -359.6 +/- 39.4, LOS: 0.0 %, DrawRatio: 8.2 %

@@ -1,3 +1,6 @@
 *.iml
 __pycache__
 *.pyc
+datasets/
+nets/
+.DS_Store
