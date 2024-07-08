@@ -59,20 +59,6 @@ def load(file_path, batch_size=64, max_size=None, delimiter=',', fen_index=0, re
 
     return train_loader, val_loader
 
-
-# def parse_labelled_position(line, delimiter=',', fen_index=0, result_index=1, score_index=2):
-#     parts = line.split(delimiter)
-#     fen_string = parts[fen_index].strip()
-#     input_data = fen_to_features(fen_string).astype(np.float32)
-#     result = parse_result(parts[result_index])
-#     score = wdl.cp_to_wdl(parts[score_index])
-#     if result is None and score is not None:
-#         result = score
-#     if score is None and result is not None:
-#         score = result
-#     output_data = (np.float32(result), np.float32(score))
-#     return input_data, output_data
-
 def parse_labelled_position(line, delimiter=',', fen_index=0, result_index=1, score_index=2):
     parts = line.split(delimiter)
     fen_string = parts[fen_index].strip()

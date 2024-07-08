@@ -37,8 +37,7 @@ def fen_to_features(fen):
 
 def square_index(file, rank, is_white):
     if is_white:
-        index = 8 * rank + file
+        return 8 * rank + file
     else:
         # Flip the rank, not the file
-        index = 8 * (7 - rank) + file
-    return index
+        return 8 * (7 - rank) + file

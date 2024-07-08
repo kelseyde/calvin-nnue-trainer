@@ -9,6 +9,15 @@ from src.model import NNUE
 
 class FenTest(unittest.TestCase):
 
+    def test_playground(self):
+        fen = "6R1/p7/2b5/Pp2k3/1P6/5rp1/4K3/8 w - b6 0 54"
+        features = fen_to_features(fen)
+        model = NNUE.load("/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/yukon_ho_1.nnue", input_size=768, hidden_size=256)
+
+        score = model(torch.tensor(features, dtype=torch.float32))
+        print(score.item())
+        print("cp: ", wdl.wdl_to_cp(score.item()))
+
     def test_fen_to_features(self):
         fen = "4b3/2k4P/2p4R/3r4/4K3/8/8/N7 w - - 0 1"
         features = fen_to_features(fen)
@@ -38,7 +47,11 @@ class FenTest(unittest.TestCase):
         reverse_fen = "rnbqk2r/pppp1ppp/5n2/4p3/1b2P3/P1N5/1PPP1PPP/R1BQKBNR b KQkq - 0 1"
         reverse_features = fen_to_features(reverse_fen)
 
-        model = NNUE.load("/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/small_net.nnue", input_size=768, hidden_size=2)
+        print("features: ", features)
+        print("reverse_features: ", reverse_features)
+        self.assertEqual(features.all(), reverse_features.all())
+
+        model = NNUE.load("/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/yukon_ho_3.nnue", input_size=768, hidden_size=256)
 
         score = model(torch.tensor(features, dtype=torch.float32))
         reverse_score = model(torch.tensor(reverse_features, dtype=torch.float32))

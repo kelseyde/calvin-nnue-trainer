@@ -6,14 +6,15 @@ from src.dataformat.epd import load
 from src.loss import WeightedMSELoss
 from tqdm import tqdm
 
-INPUT_FILE_PATH = "./datasets/training_data_0.txt"
-OUTPUT_FILE_PATH = "/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/yukon_ho_1.nnue"
-PREVIOUS_MODEL = "/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/yukon_ho_0.nnue"
+INPUT_FILE_PATH = "./datasets/training_data_1.txt"
+PREVIOUS_MODEL = "/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/yukon_ho_2.nnue"
+OUTPUT_FILE_PATH = "/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/yukon_ho_3.nnue"
 DEVICE = torch.device("mps")
 NUM_WORKERS = 3
 NUM_EPOCHS = 20
 CHECKPOINT_FREQUENCY = 1
-MAX_SIZE = None
+MAX_DATA = 10000000
+MAX_DATA_PER_EPOCH = 1000000
 BATCH_SIZE = 1024
 INPUT_SIZE = 768
 HIDDEN_SIZE = 256
@@ -21,7 +22,7 @@ LEARNING_RATE = 0.0001
 MOMENTUM = 0.9
 STEP_SIZE = 5
 GAMMA = 0.1
-LAMBDA = 0.75
+LAMBDA = 0.0
 
 
 def train():
@@ -30,7 +31,7 @@ def train():
           f"lr: {LEARNING_RATE}, momentum: {MOMENTUM}, lambda: {LAMBDA}, step size: {STEP_SIZE}, gamma: {GAMMA}")
 
     print("loading training data...")
-    train_loader, val_loader = load(INPUT_FILE_PATH, batch_size=BATCH_SIZE, max_size=MAX_SIZE,
+    train_loader, val_loader = load(INPUT_FILE_PATH, batch_size=BATCH_SIZE, max_size=MAX_DATA,
                                     delimiter='|', fen_index=0, score_index=1, result_index=2)
     nnue = init_model()
     optimizer = torch.optim.SGD(nnue.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM)
@@ -45,7 +46,10 @@ def train():
         nnue.train()
         epoch_loss = 0.0
         loop = tqdm(train_loader)
+        data_count = 0
         for input_data, output_data in loop:
+            if data_count > MAX_DATA_PER_EPOCH:
+                break
             input_data, output_data = input_data.to(DEVICE), output_data.to(DEVICE)
             optimizer.zero_grad()
             predictions = nnue(input_data)
@@ -53,6 +57,7 @@ def train():
             error.backward()
             optimizer.step()
             epoch_loss += float(error.item())
+            data_count += 1
             loop.set_description(f"epoch: {epoch}, train loss: {error.item():.6f}")
 
         scheduler.step()  # Adjust learning rate
