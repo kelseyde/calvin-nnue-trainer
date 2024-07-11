@@ -7,29 +7,32 @@ import src.quantize as q
 
 class NNUE(nn.Module):
 
-    def __init__(self, input_size=768, hidden_size=256, output_size=1, max_value=1.0):
+    def __init__(self, input_size=768, hidden_size=256):
         super(NNUE, self).__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, output_size)
-        self.max_value = max_value
-        self.relu = nn.ReLU()
+        # self.fc2 = nn.Linear(hidden_size * 2, 1)
+        self.fc2 = nn.Linear(hidden_size, 1)
 
-    def forward(self, x):
-        x = self.fc1(x)
-        x = self.clipped_relu(x)
-        x = self.fc2(x)
-        return x
+    def forward(self, input):
+        stm = self.fc1(input[:, 0])                                 # Accumulate the side-to-move features
+        # nstm = self.fc1(input[:, 1])                                # Accumulate the not-side-to-move features
+        # in_ = self.concat(stm, nstm)                                # Concatenate the stm/nstm features
+        hidden = self.clipped_relu(stm)                             # Apply clipped ReLU activation function
+        out_ = self.fc2(hidden)                                     # Pass hidden layer activations to output layer
+        return out_
+
+    def loss(self, prediction, targets, scale, lambda_):
+        wdl_result, cp_eval = targets[:, 0], targets[:, 1]          # Extract game result (wdl) and score (cp)
+        wdl_eval = torch.sigmoid(cp_eval / scale)                   # Convert score from cp to wdl
+        expected = wdl_eval * (1 - lambda_) + wdl_result * lambda_  # Blend game result wdl and score wdl
+        predicted = torch.sigmoid(prediction)                       # Convert nnue output to wdl
+        return torch.mean((expected - predicted) ** 2)              # Compute MSE between expected and predicted wdl
+
+    def concat(self, stm, nstm):
+        return torch.cat((stm, nstm), dim=1)
 
     def clipped_relu(self, x):
-        relu_output = nn.ReLU()(x)
-        clipped_output = torch.clamp(relu_output, max=self.max_value)
-        return clipped_output
-
-    def squared_clipped_relu(self, x):
-        relu_output = nn.ReLU()(x)
-        clipped_output = torch.clamp(relu_output, max=self.max_value)
-        squared_output = torch.pow(clipped_output, 2)
-        return squared_output
+        return torch.clamp(x, 0.0, 1.0)
 
     def quantize(self):
         self.fc1.weight = nn.Parameter(q.quantize_int16(self.fc1.weight), requires_grad=False)
@@ -54,6 +57,8 @@ class NNUE(nn.Module):
                     f.write(value.tobytes())
         self.dequantize()
 
+
+
     @staticmethod
     def load(file_path, input_size=768, hidden_size=256):
         nnue = NNUE(input_size=input_size, hidden_size=hidden_size)
@@ -64,12 +69,12 @@ class NNUE(nn.Module):
         with open(file_path, 'rb') as f:
             input_weight_size = input_size * hidden_size
             input_bias_size = hidden_size
-            output_weight_size = hidden_size * output_size
+            output_weight_size = (hidden_size * 2) * output_size
             output_bias_size = output_size
 
             input_weights = np.frombuffer(f.read(input_weight_size * 2), dtype=np.int16).reshape(hidden_size, input_size)
             input_biases = np.frombuffer(f.read(input_bias_size * 2), dtype=np.int16)
-            output_weights = np.frombuffer(f.read(output_weight_size * 2), dtype=np.int16).reshape(output_size, hidden_size)
+            output_weights = np.frombuffer(f.read(output_weight_size * 2), dtype=np.int16).reshape(output_size, hidden_size * 2)
             output_biases = np.frombuffer(f.read(output_bias_size * 2), dtype=np.int16)
 
             nnue.fc1.weight = nn.Parameter(torch.tensor(input_weights, dtype=torch.int16), requires_grad=False)
