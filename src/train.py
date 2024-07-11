@@ -5,7 +5,7 @@ from src import model
 from src.dataformat.epd import load
 from tqdm import tqdm
 
-INPUT_FILE_PATH = "./datasets/training_data_1.txt"
+INPUT_FILE_PATH = "../datasets/training_data_1.txt"
 # PREVIOUS_MODEL = "/Users/kelseyde/git/dan/calvin/calvin-chess-engine/src/main/resources/nnue/256HL-3B5083B8.nnue"
 # PREVIOUS_MODEL = "/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/yukon_ho_4.nnue"
 PREVIOUS_MODEL = None
@@ -14,9 +14,9 @@ DEVICE = torch.device("mps")
 NUM_WORKERS = 3
 NUM_EPOCHS = 100
 CHECKPOINT_FREQUENCY = 1
-MAX_DATA = 100
+MAX_DATA = 2
 MAX_DATA_PER_EPOCH = None
-BATCH_SIZE = 10
+BATCH_SIZE = 1
 INPUT_SIZE = 768
 HIDDEN_SIZE = 256
 LEARNING_RATE = 0.0000001

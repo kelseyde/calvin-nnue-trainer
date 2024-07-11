@@ -10,14 +10,14 @@ class NNUE(nn.Module):
     def __init__(self, input_size=768, hidden_size=256):
         super(NNUE, self).__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
-        # self.fc2 = nn.Linear(hidden_size * 2, 1)
-        self.fc2 = nn.Linear(hidden_size, 1)
+        self.fc2 = nn.Linear(hidden_size * 2, 1)
+        # self.fc2 = nn.Linear(hidden_size, 1)
 
     def forward(self, input):
         stm = self.fc1(input[:, 0])                                 # Accumulate the side-to-move features
-        # nstm = self.fc1(input[:, 1])                                # Accumulate the not-side-to-move features
-        # in_ = self.concat(stm, nstm)                                # Concatenate the stm/nstm features
-        hidden = self.clipped_relu(stm)                             # Apply clipped ReLU activation function
+        nstm = self.fc1(input[:, 1])                                # Accumulate the not-side-to-move features
+        in_ = self.concat(stm, nstm)                                # Concatenate the stm/nstm features
+        hidden = self.clipped_relu(in_)                             # Apply clipped ReLU activation function
         out_ = self.fc2(hidden)                                     # Pass hidden layer activations to output layer
         return out_
 
@@ -56,7 +56,6 @@ class NNUE(nn.Module):
                 for value in param.flatten():
                     f.write(value.tobytes())
         self.dequantize()
-
 
 
     @staticmethod
