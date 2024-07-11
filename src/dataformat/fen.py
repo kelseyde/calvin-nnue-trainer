@@ -1,5 +1,4 @@
 import numpy as np
-import torch
 
 CHAR_TO_PIECE_MAP = {
     'p': 0, 'n': 1, 'b': 2, 'r': 3, 'q': 4, 'k': 5,

@@ -1,44 +1,23 @@
+import numpy as np
 import torch
 
-MIN_INT8 = -128
-MAX_INT8 = 127
-RANGE_INT8 = MAX_INT8 - MIN_INT8 + 1 # 256
-
-MIN_INT16 = -32768
-MAX_INT16 = 32767
-RANGE_INT16 = MAX_INT16 - MIN_INT16 + 1  # 65536
-
-MIN_INT32 = -2147483648
-MAX_INT32 = 2147483647
-RANGE_INT32 = MAX_INT32 - MIN_INT32 + 1  # 4294967296
+QA = 255
+QB = 64
+QAB = QA * QB
 
 
-def quantize_int8(tensor):
-    """Quantize a float32 tensor to int8."""
-    return torch.round(tensor * MAX_INT8)
+def quantize(input_weights, input_biases, output_weights, output_bias):
+    quant_w0 = np.round(input_weights * QA).astype(np.int16)
+    quant_b0 = np.round(input_biases * QA).astype(np.int16)
+    quant_w1 = np.round(output_weights * QB).astype(np.int16)
+    quant_b1 = np.round(output_bias * QAB).astype(np.int16)
+    return quant_w0, quant_b0, quant_w1, quant_b1
 
 
-def quantize_int16(tensor):
-    """Quantize a float32 tensor to int16."""
-    return torch.round(tensor * MAX_INT16)
-
-
-def quantize_int32(tensor):
-    """Quantize a float32 tensor to int32."""
-    return torch.round(tensor * MAX_INT32)
-
-
-def dequantize_int8(tensor):
-    """Dequantize an int8 tensor to float32."""
-    return tensor / MAX_INT8
-
-
-def dequantize_int16(tensor):
-    """Dequantize an int16 tensor to float32."""
-    return tensor / MAX_INT16
-
-
-def dequantize_int32(tensor):
-    """Dequantize an int32 tensor to float32."""
-    return tensor / MAX_INT32
+def dequantize(input_weights, input_biases, output_weights, output_bias):
+    dequant_w0 = input_weights / QA
+    dequant_b0 = input_biases / QA
+    dequant_w1 = output_weights / QB
+    dequant_b1 = output_bias / QAB
+    return dequant_w0, dequant_b0, dequant_w1, dequant_b1
 

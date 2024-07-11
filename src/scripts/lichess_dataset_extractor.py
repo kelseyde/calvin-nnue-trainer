@@ -1,4 +1,5 @@
 import json
+
 from tqdm import tqdm
 
 INPUT_FILE = "/Users/kelseyde/Downloads/lichess_db_eval.jsonl"

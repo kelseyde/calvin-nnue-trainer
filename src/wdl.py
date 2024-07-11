@@ -42,5 +42,9 @@ def wdl_to_nnue_output(wdl_eval):
     return logit_value.item()
 
 
+def nnue_output_to_cp(nnue_output, scaling_factor=400):
+    return round(nnue_output * scaling_factor, 0)
+
+
 def cp_to_nnue_output(cp_eval, scaling_factor=400):
     return round(cp_eval / scaling_factor, 0)

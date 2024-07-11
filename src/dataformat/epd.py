@@ -1,11 +1,9 @@
 import time as t
 
-import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
-from tqdm import tqdm
+
 from src.dataformat.fen import fen_to_features
-from src import wdl
 
 
 class EPDFileDataset(Dataset):

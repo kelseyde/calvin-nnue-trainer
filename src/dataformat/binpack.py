@@ -1,5 +1,4 @@
 import struct
-import os
 
 # Constants
 PIECE_MAP = {

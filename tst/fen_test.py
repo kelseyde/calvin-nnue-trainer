@@ -49,6 +49,8 @@ class FenTest(unittest.TestCase):
         self.assertEqual(stm_ft_1.all(), stm_ft_2.all())
         self.assertEqual(nstm_ft_1.all(), nstm_ft_2.all())
         self.assertNotEqual(stm_1, stm_2)
+        self.assertEqual(1, stm_1)
+        self.assertEqual(0, stm_2)
 
 
 
@@ -74,10 +76,7 @@ class FenTest(unittest.TestCase):
         tensor1 = torch.tensor([white_features], dtype=torch.float32)
         tensor2 = torch.tensor([black_features], dtype=torch.float32)
         tensor3 = torch.tensor([stm], dtype=torch.float32)
-        print(tensor1)
-        print(tensor2)
-        print(tensor3)
-        score = model(tensor1, tensor2, tensor3)
+        score = model((tensor1, tensor2, tensor3))
         print(score.item())
         print("cp: ", wdl.wdl_to_cp(score.item()))
 
@@ -96,13 +95,3 @@ class FenTest(unittest.TestCase):
         # score = model(torch.tensor(features, dtype=torch.float32))
         # print(score.item())
         # print("cp: ", wdl.wdl_to_cp(score.item()))
-
-    def test_ruy_lopez(self):
-        fen = "r1bqkbnr/1ppp1ppp/p1n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4"
-        features = fen_to_features(fen)
-        model = NNUE.load("/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/first_attempt.nnue")
-
-        score = model(torch.tensor(features, dtype=torch.float32))
-        print(score.item())
-        print("cp: ", wdl.wdl_to_cp(score.item()))
-        print("qcp: ", quantize.quantize_int16(wdl.wdl_to_cp(score.item())))
