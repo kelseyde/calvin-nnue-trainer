@@ -7,18 +7,17 @@ from src.dataformat.epd import load
 
 INPUT_FILE_PATH = "../datasets/training_data_1.txt"
 # PREVIOUS_MODEL = "/Users/kelseyde/git/dan/calvin/calvin-chess-engine/src/main/resources/nnue/256HL-3B5083B8.nnue"
-PREVIOUS_MODEL = "/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/yukon_ho_4.nnue"
+PREVIOUS_MODEL = None
 # PREVIOUS_MODEL = None
 OUTPUT_FILE_PATH = "/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/yukon_ho_5.nnue"
-DEVICE = torch.device("mps")
+DEVICE = torch.device("cpu")
 NUM_WORKERS = 3
 NUM_EPOCHS = 100
 CHECKPOINT_FREQUENCY = 1
 MAX_DATA = 10000000
-MAX_DATA_PER_EPOCH = None
 BATCH_SIZE = 1024
 INPUT_SIZE = 768
-HIDDEN_SIZE = 256
+HIDDEN_SIZE = 16
 LEARNING_RATE = 0.01
 MOMENTUM = 0.0
 STEP_SIZE = 5
@@ -55,6 +54,7 @@ def train():
         epoch_loss = 0.0
         loop = tqdm(train_loader)
         for input_data, output_data in loop:
+            input_data, output_data = input_data.to(DEVICE), output_data.to(DEVICE)
             predictions = nnue(input_data)
             error = nnue.loss(predictions, output_data, SCALE, LAMBDA)
             error.backward()
@@ -85,6 +85,7 @@ def train():
         if epoch % CHECKPOINT_FREQUENCY == 0:
             visualise(train_losses, validation_losses)
             print(f"epoch: {epoch}, saving model to {OUTPUT_FILE_PATH}")
+            torch.save(nnue.state_dict(), f"../nets/state_dict_{epoch}.pt")
             nnue.save(OUTPUT_FILE_PATH)
 
     nnue.save(OUTPUT_FILE_PATH)

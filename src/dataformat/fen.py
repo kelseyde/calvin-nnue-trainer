@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 CHAR_TO_PIECE_MAP = {
     'p': 0, 'n': 1, 'b': 2, 'r': 3, 'q': 4, 'k': 5,
@@ -27,8 +28,9 @@ def fen_to_features(fen):
             black_features = update_features(black_features, square_index, piece_index, is_white, False)
             file += 1
 
-    white_features = white_features.flatten()
-    black_features = black_features.flatten()
+    white_features = torch.tensor(white_features.flatten(), dtype=torch.float32)
+    black_features = torch.tensor(black_features.flatten(), dtype=torch.float32)
+    stm = torch.tensor([stm], dtype=torch.int8)
     stm_features = white_features if stm == 1 else black_features
     nstm_features = black_features if stm == 1 else white_features
 
