@@ -10,11 +10,11 @@ INPUT_FILE_PATH = "../datasets/training_data_1.txt"
 PREVIOUS_MODEL = None
 # PREVIOUS_MODEL = None
 OUTPUT_FILE_PATH = "/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/yukon_ho_5.nnue"
-DEVICE = torch.device("cpu")
+DEVICE = torch.device("mps")
 NUM_WORKERS = 3
 NUM_EPOCHS = 100
 CHECKPOINT_FREQUENCY = 1
-MAX_DATA = 10000000
+MAX_DATA = None
 BATCH_SIZE = 1024
 INPUT_SIZE = 768
 HIDDEN_SIZE = 16
@@ -54,7 +54,8 @@ def train():
         epoch_loss = 0.0
         loop = tqdm(train_loader)
         for input_data, output_data in loop:
-            input_data, output_data = input_data.to(DEVICE), output_data.to(DEVICE)
+            input_data = input_data.to(DEVICE)
+            output_data = output_data.to(DEVICE)
             predictions = nnue(input_data)
             error = nnue.loss(predictions, output_data, SCALE, LAMBDA)
             error.backward()
@@ -73,6 +74,8 @@ def train():
         with torch.no_grad():
             loop = tqdm(val_loader)
             for input_data, output_data in loop:
+                input_data = input_data.to(DEVICE)
+                output_data = output_data.to(DEVICE)
                 predictions = nnue(input_data)
                 error = nnue.loss(predictions, output_data, SCALE, LAMBDA)
                 validation_loss += float(error.item())
