@@ -23,6 +23,12 @@ class NNUE(nn.Module):
         return out_
 
     def loss(self, prediction, targets, scale, lambda_):
+        """
+        Compute the loss function for the neural network. The loss function is the mean squared error between the
+        expected wdl and the blend of the game result wdl and the centipawn score converted to wdl space.
+        The blend is controlled by the lambda parameter: lambda=0.0 means fully based on game result, lambda=1.0 means
+        fully based on cp score.
+        """
         wdl_result, cp_eval = targets[:, 0], targets[:, 1]          # Extract game result (wdl) and score (cp)
         wdl_eval = torch.sigmoid(cp_eval / scale)                   # Convert score from cp to wdl
         expected = wdl_eval * (1 - lambda_) + wdl_result * lambda_  # Blend game result wdl and score wdl

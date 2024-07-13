@@ -6,6 +6,14 @@ import numpy as np
 from src.dataformat.fen import fen_to_features
 
 
+class Batch:
+    stm_indices: torch.Tensor
+    nstm_indices: torch.Tensor
+    values: torch.Tensor
+    cp: torch.Tensor
+    wdl: torch.Tensor
+    size: int
+
 class EPDFileDataset(Dataset):
     def __init__(self, file_path, max_size=None, delimiter=',', fen_index=0, result_index=1, score_index=2):
         self.file_path = file_path

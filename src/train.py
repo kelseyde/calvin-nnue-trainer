@@ -5,24 +5,27 @@ from tqdm import tqdm
 from src import model
 from src.dataformat.epd import load
 
-INPUT_FILE_PATH = "../datasets/training_data_1.txt"
-# PREVIOUS_MODEL = "/Users/kelseyde/git/dan/calvin/calvin-chess-engine/src/main/resources/nnue/256HL-3B5083B8.nnue"
-PREVIOUS_MODEL = None
-# PREVIOUS_MODEL = None
-OUTPUT_FILE_PATH = "/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/yukon_ho_5.nnue"
+DATASET_DIR = "../datasets/"
+DATASET_FILE = "training_data_1.txt"
+DATASET_PATH = DATASET_DIR + DATASET_FILE
+MODEL_DIR = "../nets/"
+PREVIOUS_MODEL_NAME = "calvinball_1_3"
+CHECKPOINT_MODEL_NAME = "calvinball_2"
+CHECKPOINT_MODEL_PATH = MODEL_DIR + CHECKPOINT_MODEL_NAME
+
 DEVICE = torch.device("mps")
 NUM_WORKERS = 3
-NUM_EPOCHS = 100
+NUM_EPOCHS = 30
 CHECKPOINT_FREQUENCY = 1
-MAX_DATA = None
-BATCH_SIZE = 1024
+MAX_DATA = 20000000
+BATCH_SIZE = 1024 * 4
 INPUT_SIZE = 768
-HIDDEN_SIZE = 16
-LEARNING_RATE = 0.01
+HIDDEN_SIZE = 64
+LEARNING_RATE = 0.1
 MOMENTUM = 0.0
-STEP_SIZE = 5
+STEP_SIZE = 10
 GAMMA = 0.1
-LAMBDA = 0.75
+LAMBDA = 0.9
 SCALE = 400.0
 
 
@@ -39,11 +42,11 @@ def train():
           f"gamma: {GAMMA}")
 
     print("loading training data...")
-    train_loader, val_loader = load(INPUT_FILE_PATH, batch_size=BATCH_SIZE, device=DEVICE, max_size=MAX_DATA,
+    train_loader, val_loader = load(DATASET_PATH, batch_size=BATCH_SIZE, device=DEVICE, max_size=MAX_DATA,
                                     delimiter='|', fen_index=0, score_index=1, result_index=2)
-    nnue = init_model()
+    nnue = model.NNUE(input_size=INPUT_SIZE, hidden_size=HIDDEN_SIZE).to(DEVICE)
     optimizer = torch.optim.SGD(nnue.parameters(), lr=LEARNING_RATE)
-    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=STEP_SIZE, gamma=GAMMA)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=STEP_SIZE, gamma=GAMMA)
 
     train_losses = []
     validation_losses = []
@@ -64,7 +67,7 @@ def train():
             epoch_loss += float(error.item())
             loop.set_description(f"epoch: {epoch}, train loss: {error.item():.6f}")
 
-        # scheduler.step()  # Adjust learning rate
+        scheduler.step()  # Adjust learning rate
         avg_train_loss = epoch_loss / len(train_loader)
         train_losses.append(avg_train_loss)
 
@@ -87,16 +90,19 @@ def train():
 
         if epoch % CHECKPOINT_FREQUENCY == 0:
             visualise(train_losses, validation_losses)
-            print(f"epoch: {epoch}, saving model to {OUTPUT_FILE_PATH}")
-            torch.save(nnue.state_dict(), f"../nets/state_dict_{epoch}.pt")
-            nnue.save(OUTPUT_FILE_PATH)
+            save_name = f"{CHECKPOINT_MODEL_PATH}_{epoch}.pt"
+            print(f"epoch: {epoch}, saving model to {save_name}")
+            torch.save(nnue.state_dict(), save_name)
+            # nnue.save(OUTPUT_FILE_PATH)
 
-    nnue.save(OUTPUT_FILE_PATH)
+    # nnue.save(OUTPUT_FILE_PATH)
 
 
 def init_model():
-    if PREVIOUS_MODEL is not None:
-        return model.NNUE.load(PREVIOUS_MODEL, input_size=INPUT_SIZE, hidden_size=HIDDEN_SIZE).to(DEVICE)
+    if PREVIOUS_MODEL_NAME is not None:
+        nnue = model.NNUE(input_size=INPUT_SIZE, hidden_size=HIDDEN_SIZE).to(DEVICE)
+        nnue.load_state_dict(torch.load(MODEL_DIR + PREVIOUS_MODEL_NAME + ".pt", map_location=DEVICE))
+        return nnue
     else:
         return model.NNUE(input_size=INPUT_SIZE, hidden_size=HIDDEN_SIZE).to(DEVICE)
 
