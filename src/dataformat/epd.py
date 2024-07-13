@@ -17,6 +17,7 @@ class Batch:
 class EPDFileDataset(Dataset):
     def __init__(self, file_path, max_size=None, delimiter=',', fen_index=0, result_index=1, score_index=2):
         self.file_path = file_path
+        self.file = open(file_path, 'r')
         self.max_size = max_size
         self.delimiter = delimiter
         self.fen_index = fen_index
@@ -28,22 +29,20 @@ class EPDFileDataset(Dataset):
 
     def _build_index(self):
         offset = 0
-        with open(self.file_path, 'r') as f:
-            for idx, line in enumerate(f):
-                self.index_offsets.append(offset)
-                offset += len(line)
-                if self.max_size is not None and idx >= self.max_size - 1:
-                    break
+        for idx, line in enumerate(self.file):
+            self.index_offsets.append(offset)
+            offset += len(line)
+            if self.max_size is not None and idx >= self.max_size - 1:
+                break
         self.length = len(self.index_offsets)
 
     def __len__(self):
         return self.length
 
     def __getitem__(self, idx):
-        with open(self.file_path, 'r') as f:
-            f.seek(self.index_offsets[idx])
-            line = f.readline()
-            return parse_labelled_position(line, self.delimiter, self.fen_index, self.result_index, self.score_index)
+        self.file.seek(self.index_offsets[idx])
+        line = self.file.readline()
+        return parse_labelled_position(line, self.delimiter, self.fen_index, self.result_index, self.score_index)
 
 
 def load(file_path, batch_size=64, max_size=None, device="mps", delimiter=',', fen_index=0, result_index=1, score_index=2):
@@ -76,7 +75,7 @@ def parse_labelled_position(line, delimiter=',', fen_index=0, result_index=1, sc
         result = score
     if score is None and result is not None:
         score = result
-    input_data = torch.stack([stm_features, nstm_features])
+    input_data = torch.tensor([stm_features, nstm_features], dtype=torch.float32)
     output_data = torch.tensor((result, score), dtype=torch.float32)
     return input_data, output_data
 
