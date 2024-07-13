@@ -55,9 +55,7 @@ class PackedBoard:
 
         input_data = torch.tensor(np.stack([stm_features, nstm_features]), dtype=torch.float32)
 
-        result = torch.tensor([decode_wdl(self.wdl)], dtype=torch.float32)
-        score = torch.tensor([decode_centipawns(self.cp)], dtype=torch.float32)
-        output_data = torch.tensor((result, score), dtype=torch.float32)
+        output_data = torch.tensor(([decode_wdl(self.wdl)], [decode_centipawns(self.cp)]), dtype=torch.float32)
 
         return input_data, output_data
 
