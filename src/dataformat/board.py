@@ -34,38 +34,33 @@ class PackedBoard:
         return packed
 
     def to_features(self):
-        white_features = np.zeros(768)
-        black_features = np.zeros(768)
+        features = np.zeros((2, 768), dtype=np.float32)
         occ = self.occ
-        pcs = self.pcs.copy()
+        idx = 0
+
         while occ:
             sq = lsb(occ)
-            piece = pcs.pop(0)
+            piece = self.pcs[idx]
+            idx += 1
             piece_idx, colour = decode_piece(piece)
-            if piece_idx == EMPTY_PIECE:
-                occ = pop_bit(occ)
-                continue
             is_white_piece = colour == 1
-            white_features = self.update_features(white_features, sq, piece_idx, is_white_piece, True)
-            black_features = self.update_features(black_features, sq, piece_idx, is_white_piece, False)
+            w_sq, b_sq = sq, sq ^ 56
+            w_colour_offset = 0 if is_white_piece else COLOUR_STRIDE
+            b_colour_offset = COLOUR_STRIDE if is_white_piece else 0
+            w_ft_idx = w_colour_offset + piece_idx * 64 + w_sq
+            b_ft_idx = b_colour_offset + piece_idx * 64 + b_sq
+            features[0][w_ft_idx] = 1
+            features[1][b_ft_idx] = 1
             occ = pop_bit(occ)
 
-        stm_features = white_features if self.stm == 1 else black_features
-        nstm_features = black_features if self.stm == 1 else white_features
+        stm_features = features[0] if self.stm == 1 else features[1]
+        nstm_features = features[1] if self.stm == 1 else features[0]
 
-        input_data = torch.tensor(np.stack([stm_features, nstm_features]), dtype=torch.float32)
+        input_data = torch.tensor(np.array([stm_features, nstm_features]), dtype=torch.float32)
 
         output_data = torch.tensor(([decode_wdl(self.wdl)], [decode_centipawns(self.cp)]), dtype=torch.float32)
 
         return input_data, output_data
-
-    def update_features(self, features, square_idx, piece_idx, is_white_piece, is_white_perspective):
-        colour_idx = 0 if is_white_piece == is_white_perspective else 1
-        if not is_white_perspective:
-            square_idx ^= 56
-        feature_idx = colour_idx * COLOUR_STRIDE + piece_idx * PIECE_STRIDE + square_idx
-        features[feature_idx] = 1
-        return features
 
 
     @staticmethod
