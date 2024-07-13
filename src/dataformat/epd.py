@@ -65,17 +65,16 @@ def load(file_path, batch_size=64, max_size=None, device="mps", delimiter=',', f
     return train_loader, val_loader
 
 
-def parse_labelled_position(line, delimiter=',', fen_index=0, result_index=1, score_index=2, device="mps"):
+def parse_labelled_position(line, delimiter='|', fen_index=0, score_index=1, result_index=2, device="mps"):
     parts = line.split(delimiter)
     fen_string = parts[fen_index].strip()
-    stm_features, nstm_features, stm = fen_to_features(fen_string)
+    input_data, stm = fen_to_features(fen_string)
     result = parse_result(parts[result_index], stm)
     score = parse_score(parts[score_index], stm)
     if result is None and score is not None:
         result = score
     if score is None and result is not None:
         score = result
-    input_data = torch.tensor([stm_features, nstm_features], dtype=torch.float32)
     output_data = torch.tensor((result, score), dtype=torch.float32)
     return input_data, output_data
 
