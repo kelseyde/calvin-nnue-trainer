@@ -15,7 +15,7 @@ class Batch:
     size: int
 
 class EPDFileDataset(Dataset):
-    def __init__(self, file_path, max_size=None, delimiter=',', fen_index=0, result_index=1, score_index=2):
+    def __init__(self, file_path, max_size=None, delimiter=',', fen_index=0, score_index=1, result_index=2):
         self.file_path = file_path
         self.file = open(file_path, 'r')
         self.max_size = max_size
@@ -42,10 +42,10 @@ class EPDFileDataset(Dataset):
     def __getitem__(self, idx):
         self.file.seek(self.index_offsets[idx])
         line = self.file.readline()
-        return parse_labelled_position(line, self.delimiter, self.fen_index, self.result_index, self.score_index)
+        return parse_labelled_position(line, self.delimiter, self.fen_index, self.score_index, self.result_index)
 
 
-def load(file_path, batch_size=64, max_size=None, device="mps", delimiter=',', fen_index=0, result_index=1, score_index=2):
+def load(file_path, batch_size=64, max_size=None, device="mps", delimiter=',', fen_index=0, result_index=2, score_index=1):
     start = t.time()
 
     dataset = EPDFileDataset(file_path, max_size, delimiter, fen_index, result_index, score_index)

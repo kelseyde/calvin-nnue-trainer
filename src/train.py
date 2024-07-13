@@ -1,13 +1,15 @@
 import matplotlib.pyplot as plt
 import torch
+import dataloader
 from tqdm import tqdm
 
 from src import model
-from src.dataformat.epd import load
 
 DATASET_DIR = "../datasets/"
-DATASET_FILE = "training_data_1.txt"
+DATASET_FILE = "calvin_data_0.bin"
+# DATASET_FILE = "training_data_0.txt"
 DATASET_PATH = DATASET_DIR + DATASET_FILE
+DATA_FORMAT = dataloader.DataFormat.CALVIN
 MODEL_DIR = "../nets/"
 PREVIOUS_MODEL_NAME = "calvinball_1_3"
 CHECKPOINT_MODEL_NAME = "calvinball_2"
@@ -17,11 +19,11 @@ DEVICE = torch.device("mps")
 NUM_WORKERS = 3
 NUM_EPOCHS = 30
 CHECKPOINT_FREQUENCY = 1
-MAX_DATA = 30000000
+MAX_DATA = None
 BATCH_SIZE = 1024
 INPUT_SIZE = 768
 HIDDEN_SIZE = 64
-LEARNING_RATE = 0.1
+LEARNING_RATE = 0.01
 MOMENTUM = 0.0
 STEP_SIZE = 10
 GAMMA = 0.1
@@ -42,8 +44,7 @@ def train():
           f"gamma: {GAMMA}")
 
     print("loading training data...")
-    train_loader, val_loader = load(DATASET_PATH, batch_size=BATCH_SIZE, device=DEVICE, max_size=MAX_DATA,
-                                    delimiter='|', fen_index=0, score_index=1, result_index=2)
+    train_loader, val_loader = dataloader.load(DATASET_PATH, DATA_FORMAT, BATCH_SIZE, MAX_DATA, DEVICE)
     nnue = model.NNUE(input_size=INPUT_SIZE, hidden_size=HIDDEN_SIZE).to(DEVICE)
     optimizer = torch.optim.SGD(nnue.parameters(), lr=LEARNING_RATE)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=STEP_SIZE, gamma=GAMMA)
@@ -63,7 +64,7 @@ def train():
             error = nnue.loss(predictions, output_data, SCALE, LAMBDA)
             error.backward()
             optimizer.step()
-            optimizer.zero_grad()
+            optimizer.zero_grad(set_to_none=True)
             epoch_loss += float(error.item())
             loop.set_description(f"epoch: {epoch}, train loss: {error.item():.6f}")
 

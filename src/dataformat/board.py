@@ -1,4 +1,5 @@
 import struct
+import sys
 
 import numpy as np
 import torch
@@ -26,22 +27,24 @@ class PackedBoard:
         """
         Convert the packed board to a byte string.
         """
-        packed = bytearray()
-        packed.extend(self.occ.to_bytes(8, 'big'))
-        for piece in self.pcs:
-            packed.append(piece)
-        packed.extend(self.cp)
-        packed.append((self.stm << 2) | self.wdl)
+        pcs_bytes = bytes(self.pcs)
+        stm_wdl_byte = (self.stm << 2) | self.wdl
+        cp_int = struct.unpack('>h', self.cp)[0]
+        packed = struct.pack('>Q32shB', self.occ, pcs_bytes, cp_int, stm_wdl_byte)
         return packed
 
     def to_features(self):
         white_features = np.zeros(768)
         black_features = np.zeros(768)
         occ = self.occ
+        pcs = self.pcs.copy()
         while occ:
             sq = lsb(occ)
-            piece = self.pcs.pop(0)
+            piece = pcs.pop(0)
             piece_idx, colour = decode_piece(piece)
+            if piece_idx == EMPTY_PIECE:
+                occ = pop_bit(occ)
+                continue
             is_white_piece = colour == 1
             white_features = self.update_features(white_features, sq, piece_idx, is_white_piece, True)
             black_features = self.update_features(black_features, sq, piece_idx, is_white_piece, False)
@@ -51,7 +54,12 @@ class PackedBoard:
         nstm_features = black_features if self.stm == 1 else white_features
 
         input_data = torch.tensor(np.stack([stm_features, nstm_features]), dtype=torch.float32)
-        return input_data, self.stm
+
+        result = torch.tensor([decode_wdl(self.wdl)], dtype=torch.float32)
+        score = torch.tensor([decode_centipawns(self.cp)], dtype=torch.float32)
+        output_data = torch.tensor((result, score), dtype=torch.float32)
+
+        return input_data, output_data
 
     def update_features(self, features, square_idx, piece_idx, is_white_piece, is_white_perspective):
         colour_idx = 0 if is_white_piece == is_white_perspective else 1
@@ -81,14 +89,17 @@ class PackedBoard:
         fen, active_color = fen_parts[:2]
         stm = 1 if active_color == 'w' else 0
 
-        cp = encode_centipawns(int(cp))
-        wdl = encode_wdl(float(wdl))
+        cp = encode_centipawns(parse_score(cp, stm))
+        wdl = encode_wdl(parse_result(wdl, stm))
         occ = 0
         pcs = []
+        rank_pcs = []
 
         rank, file = 7, 0
         for char in fen:
             if char == '/':
+                pcs = rank_pcs + pcs
+                rank_pcs = []
                 rank, file = rank - 1, 0
             elif char.isdigit():
                 file += int(char)
@@ -97,12 +108,12 @@ class PackedBoard:
                 type = CHAR_TO_PIECE_MAP[char.lower()]
                 square_idx = 8 * rank + file
                 occ |= 1 << square_idx
-                pcs.append(encode_piece(type, colour))
+                rank_pcs.append(encode_piece(type, colour))
                 file += 1
+        pcs = rank_pcs + pcs
 
         while len(pcs) < 32:
             pcs.append(encode_piece(EMPTY_PIECE, 0))
-
         return PackedBoard(occ, pcs, cp, wdl, stm)
 
 
@@ -174,6 +185,20 @@ def decode_centipawns(encoded):
     return score
 
 
+def parse_result(result, stm):
+    if '1-0' in result or "1.0" in result:
+        return 1.0 if stm == 1 else 0.0
+    elif '0-1' in result or "0.0" in result:
+        return 0.0 if stm == 1 else 1.0
+    elif '1/2-1/2' in result or "0.5" in result:
+        return 0.5
+    else:
+        return None
+
+
+def parse_score(score, stm):
+    return int(score) if stm == 1 else -int(score)
+
 def lsb(bb):
     return (bb & -bb).bit_length() - 1
 
@@ -182,29 +207,33 @@ def pop_bit(bb):
     return bb & (bb - 1)
 
 
-lab = "r1bqk2r/ppp2ppp/8/4b3/8/2P3P1/P3PPBP/R1BQK2R w KQkq - 0 10 | 5 | 0.5"
-print("Original length:", len(lab.encode('utf-8')))
-pb = PackedBoard.from_labelled(lab)
-pb_bytes = pb.to_bytes()
-print("Encoded length:", len(pb_bytes))
-pb2 = PackedBoard.from_bytes(pb_bytes)
-print("Re-encoded length:", len(pb2.to_bytes()))
-
-# Debug prints to check the pcs arrays
-print("Original pcs:", pb.pcs)
-print("Re-encoded pcs:", pb2.pcs)
-
-assert pb.occ == pb2.occ, "Occupancies do not match!"
-assert pb.pcs == pb2.pcs, "Pieces arrays do not match!"
-assert pb.cp == pb2.cp, "Centipawn scores do not match!"
-assert pb.wdl == pb2.wdl, "WDL values do not match!"
-assert pb.stm == pb2.stm, "Side to move values do not match!"
-
-b_features = pb.to_features()
-b2_features = pb2.to_features()
-fen_features = epd.parse_labelled_position(lab)
-
-assert torch.equal(b_features[0], b2_features[0]), "Feature tensors do not match!"
-assert torch.equal(b_features[0], fen_features[0]), "Feature tensors do not match!"
-
-print("Test passed.")
+# lab = "r1bqk2r/ppp2ppp/8/4b3/8/2P3P1/P3PPBP/R1BQK2R w KQkq - 0 10 | 5 | 0.5"
+# print("Original length:", len(lab.encode('utf-8')))
+# pb = PackedBoard.from_labelled(lab)
+# pb_bytes = pb.to_bytes()
+# print("Encoded length:", len(pb_bytes))
+# pb2 = PackedBoard.from_bytes(pb_bytes)
+# print("Re-encoded length:", len(pb2.to_bytes()))
+#
+# # Debug prints to check the pcs arrays
+# print("Original pcs:", pb.pcs)
+# print("Re-encoded pcs:", pb2.pcs)
+#
+# assert pb.occ == pb2.occ, "Occupancies do not match!"
+# assert pb.pcs == pb2.pcs, "Pieces arrays do not match!"
+# assert pb.cp == pb2.cp, "Centipawn scores do not match!"
+# assert pb.wdl == pb2.wdl, "WDL values do not match!"
+# assert pb.stm == pb2.stm, "Side to move values do not match!"
+#
+# b_features = pb.to_features()
+# b2_features = pb2.to_features()
+# fen_features = epd.parse_labelled_position(lab)
+#
+# print("Original features:", b_features)
+# print("FEN features:", fen_features)
+# print(len(b_features))
+# print(len(fen_features))
+# assert torch.equal(b_features[0], fen_features[0]), "Input tensors do not match!"
+# assert torch.equal(b_features[1], fen_features[1]), "Output tensors do not match!"
+#
+# print("Test passed.")
