@@ -1,10 +1,6 @@
 import struct
-import sys
 
 import numpy as np
-import torch
-
-from src.dataformat import epd
 
 CHAR_TO_PIECE_MAP = {
     'p': 0, 'n': 1, 'b': 2, 'r': 3, 'q': 4, 'k': 5,
@@ -34,7 +30,8 @@ class PackedBoard:
         return packed
 
     def to_features(self):
-        features = np.zeros((2, 768), dtype=np.float32)
+        black_features = np.zeros(768, dtype=np.float32)
+        white_features = np.zeros(768, dtype=np.float32)
         occ = self.occ
         idx = 0
 
@@ -49,16 +46,15 @@ class PackedBoard:
             b_colour_offset = COLOUR_STRIDE if is_white_piece else 0
             w_ft_idx = w_colour_offset + piece_idx * 64 + w_sq
             b_ft_idx = b_colour_offset + piece_idx * 64 + b_sq
-            features[0][w_ft_idx] = 1
-            features[1][b_ft_idx] = 1
+            white_features[w_ft_idx] = 1
+            black_features[b_ft_idx] = 1
             occ = pop_bit(occ)
 
-        stm_features = features[0] if self.stm == 1 else features[1]
-        nstm_features = features[1] if self.stm == 1 else features[0]
+        stm_features = white_features if self.stm == 1 else black_features
+        nstm_features = black_features if self.stm == 1 else white_features
 
-        input_data = torch.tensor(np.array([stm_features, nstm_features]), dtype=torch.float32)
-
-        output_data = torch.tensor(([decode_wdl(self.wdl)], [decode_centipawns(self.cp)]), dtype=torch.float32)
+        input_data = np.array([stm_features, nstm_features], dtype=np.float32)
+        output_data = np.array([decode_wdl(self.wdl), decode_cp(self.cp)], dtype=np.float32)
 
         return input_data, output_data
 
@@ -169,7 +165,7 @@ def encode_centipawns(score):
     return encoded
 
 
-def decode_centipawns(encoded):
+def decode_cp(encoded):
     """
     Decodes a 16-bit encoded centipawn score.
     """
@@ -191,6 +187,7 @@ def parse_result(result, stm):
 
 def parse_score(score, stm):
     return int(score) if stm == 1 else -int(score)
+
 
 def lsb(bb):
     return (bb & -bb).bit_length() - 1
@@ -226,7 +223,7 @@ def pop_bit(bb):
 # print("FEN features:", fen_features)
 # print(len(b_features))
 # print(len(fen_features))
-# assert torch.equal(b_features[0], fen_features[0]), "Input tensors do not match!"
-# assert torch.equal(b_features[1], fen_features[1]), "Output tensors do not match!"
+# assert torch.equal(torch.tensor(b_features[0]), fen_features[0]), "Input tensors do not match!"
+# assert torch.equal(torch.tensor(b_features[1]), fen_features[1]), "Output tensors do not match!"
 #
 # print("Test passed.")

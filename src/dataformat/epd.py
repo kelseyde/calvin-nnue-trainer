@@ -1,7 +1,7 @@
 import time as t
+
 import torch
 from torch.utils.data import DataLoader, Dataset
-import numpy as np
 
 from src.dataformat.fen import fen_to_features
 

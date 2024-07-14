@@ -1,6 +1,6 @@
 import torch
 
-from src.dataformat import epd, board
+from src.dataformat import board
 
 INPUT_FILE_PATH = "../../datasets/training_data_0.txt"
 OUTPUT_FILE_PATH = "../../datasets/calvin_data_1.bin"

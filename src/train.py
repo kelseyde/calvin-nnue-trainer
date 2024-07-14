@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import torch
-import dataloader
 from tqdm import tqdm
 
+import dataloader
 from src import model
 
 DATASET_DIR = "../datasets/"
@@ -11,16 +11,16 @@ DATASET_FILE = "calvin_data_0.bin"
 DATASET_PATH = DATASET_DIR + DATASET_FILE
 DATA_FORMAT = dataloader.DataFormat.CALVIN
 MODEL_DIR = "../nets/"
-PREVIOUS_MODEL_NAME = "calvinball_1_3"
-CHECKPOINT_MODEL_NAME = "calvinball_2"
+PREVIOUS_MODEL_NAME = None
+CHECKPOINT_MODEL_NAME = "calvinball_3"
 CHECKPOINT_MODEL_PATH = MODEL_DIR + CHECKPOINT_MODEL_NAME
 
 DEVICE = torch.device("mps")
 NUM_WORKERS = 3
-NUM_EPOCHS = 30
+NUM_EPOCHS = 20
 CHECKPOINT_FREQUENCY = 1
 MAX_DATA = None
-BATCH_SIZE = 1024
+BATCH_SIZE = 1024 * 4
 INPUT_SIZE = 768
 HIDDEN_SIZE = 64
 LEARNING_RATE = 0.01

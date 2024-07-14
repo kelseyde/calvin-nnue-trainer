@@ -1,5 +1,4 @@
 import numpy as np
-import torch
 
 QA = 255
 QB = 64

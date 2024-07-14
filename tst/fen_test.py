@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from src import wdl, quantize
+from src import wdl
 from src.dataformat.fen import fen_to_features
 from src.model import NNUE
 
@@ -12,9 +12,9 @@ class FenTest(unittest.TestCase):
     def test_playground(self):
         fen = "6R1/p7/2b5/Pp2k3/1P6/5rp1/4K3/8 w - b6 0 54"
         features = fen_to_features(fen)
-        model = NNUE.load("/Users/kelseyde/git/dan/calvin/calvin-nnue-trainer/nets/yukon_ho_1.nnue", input_size=768, hidden_size=256)
+        model = NNUE(input_size=768, hidden_size=256)
 
-        score = model(torch.tensor(features, dtype=torch.float32))
+        score = model([features[0]])
         print(score.item())
         print("cp: ", wdl.wdl_to_cp(score.item()))
 

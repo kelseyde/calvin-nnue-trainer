@@ -1,8 +1,8 @@
 import enum
 import time as t
+
 import torch
-from torch.utils.data import DataLoader, Dataset
-import numpy as np
+from torch.utils.data import DataLoader
 
 from src.dataformat.calvinformat import CalvinDataset
 from src.dataformat.epd import EPDFileDataset
@@ -29,8 +29,10 @@ def load(file_path, data_format=DataFormat.CALVIN, batch_size=64, max_size=None,
 
     train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
+                              pin_memory=True, prefetch_factor=2, num_workers=5, persistent_workers=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False,
+                            pin_memory=True, prefetch_factor=2, num_workers=5, persistent_workers=True)
 
     end = t.time()
     print(f"data loaded in {end - start:.2f}s")

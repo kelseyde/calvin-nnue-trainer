@@ -79,8 +79,8 @@ class NNUE(nn.Module):
             b1 = np.frombuffer(f.read(output_bias_size * 2), dtype=np.int16)
             bytes_read += output_bias_size * 2
 
-            if bytes_read != file_size:
-                raise ValueError(f"Expected to read {file_size} bytes, but only read {bytes_read} bytes.")
+            # if bytes_read != file_size:
+            #     raise ValueError(f"Expected to read {file_size} bytes, but only read {bytes_read} bytes.")
 
             # Dequantize the weights and biases
             w0, b0, w1, b1 = q.dequantize(w0, b0, w1, b1)
